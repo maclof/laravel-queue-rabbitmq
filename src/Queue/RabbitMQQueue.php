@@ -263,11 +263,27 @@ class RabbitMQQueue extends Queue implements QueueContract
         return $queueName ?: $this->queueName;
     }
 
+    /**
+     * Create a payload array from the given job and data.
+     *
+     * @param  mixed  $job
+     * @param  string  $queue
+     * @param  mixed  $data
+     * @return array
+     */
     protected function createPayloadArray($job, $queue, $data = '')
     {
-        return array_merge(parent::createPayloadArray($job, $queue, $data), [
-            'id' => $this->getRandomId(),
-        ]);
+        $result = is_object($job)
+            ? $this->createObjectPayload($job, $queue, $data)
+            : $this->createStringPayload($job, $queue, $data);
+
+        $result['id'] = $this->getRandomId();
+
+        if (isset($data['pipes']) && is_array($data['pipes'])) {
+            $result['data']['pipes'] = $data['pipes'];
+        }
+
+        return $result;
     }
 
     /**
